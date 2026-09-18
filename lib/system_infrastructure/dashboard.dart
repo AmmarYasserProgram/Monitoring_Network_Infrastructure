@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:project_futter_m_3/system_infrastructure/connect_ssh_server.dart';
+import 'package:project_futter_m_3/system_infrastructure/scanning_devices.dart';
+import 'package:project_futter_m_3/system_infrastructure/scanning_port_device.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -12,12 +15,22 @@ class Dashboard extends StatelessWidget {
         backgroundColor: Color(0xFF0A1730),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          "Network Monitor",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.network_check,
+              size: 45,
+              color: Colors.blue,
+            ),
+            SizedBox(width: 8,),
+            const Text(
+              "Network Monitor",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -179,8 +192,7 @@ class Dashboard extends StatelessWidget {
 
                 if (desktop) {
                   return Row(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
                       // SERVER INFO
@@ -210,7 +222,7 @@ class Dashboard extends StatelessWidget {
                         flex: 3,
                         child: usageCard(
                           title: "STORAGE (/)",
-                          percent: 61,
+                          percent: 63,
                           used: "15.1 / 24.4 GB",
                           color: Colors.orange,
                           icon: Icons.storage,
@@ -249,15 +261,62 @@ class Dashboard extends StatelessWidget {
                 );
               },
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-              children: [
-                Expanded(child: FilledButton(onPressed: (){}, child: Text("Dashboard"))),
-                Expanded(child: FilledButton(onPressed: (){}, child: Text("Scanning Devices"))),
-                Expanded(child: FilledButton(onPressed: (){}, child: Text("SSH To Server"))),
-                Expanded(child: FilledButton(onPressed: (){}, child: Text("Scaner Port Device"))),
-              ],
+            SizedBox(
+              height: 130,
+            ),
+            Container(
+              child: Wrap(
+                spacing: 25,
+                runSpacing: 15,
+                // mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  FilledButton(
+                    onPressed: (){
+                      String? pageName =  ModalRoute.of(context)?.settings.name;
+                      print(pageName);
+                    },
+                    child: Text("Dashboard"),
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
+                    ),
+                  ),
+                  FilledButton(
+                      onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(
+                            settings: RouteSettings(name: "ScanningDevices"),
+                            builder: (context) => ScanningDevices())
+                        );
+                      },
+                      child: Text("Scanning Devices"),
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
+                    ),
+                  ),
+                  FilledButton(
+                      onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(
+                            settings: RouteSettings(name: 'ConnectSshServer'),
+                            builder: (context)=> ConnectSshServer())
+                        );
+                      },
+                      child: Text("SSH To Server"),
+                      style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),),
+                  ),
+                  FilledButton(
+                      onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(
+                          settings: RouteSettings(name: 'ScanningPortDevice'),
+                          builder: (context) => ScanningPortDevice(),)
+                        );
+                      },
+                      child: Text("Scaner Port Device"),
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
           ],

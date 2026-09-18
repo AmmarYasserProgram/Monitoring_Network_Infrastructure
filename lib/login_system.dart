@@ -18,7 +18,12 @@ class _LoginPageState extends State<LoginPage> {
     String password = passwordController.text;
     print("Username: $username");
     print("Password: $password");
-    Navigator.push(context, MaterialPageRoute(builder: (context)=> Dashboard()));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          settings: RouteSettings(name: "DashBoard"),
+            builder: (context)=> Dashboard()),
+    );
 
 // هنا لاحقاً نرسل البيانات إلى Flask
 }
