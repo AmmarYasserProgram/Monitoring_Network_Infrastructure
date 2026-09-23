@@ -1,28 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:project_futter_m_3/system_infrastructure/connect_ssh_server.dart';
-import 'package:project_futter_m_3/system_infrastructure/scanning_devices.dart';
-import 'package:project_futter_m_3/system_infrastructure/scanning_port_device.dart';
+import 'package:project_futter_m_3/device_scanner/device_provider.dart';
+
+import 'package:project_futter_m_3/system_infrastructure/widget_my/sharing_drawer.dart';
+import 'package:project_futter_m_3/system_infrastructure/terminalPage.dart';
+import 'package:project_futter_m_3/device_scanner/scanning_devices.dart';
+import 'package:project_futter_m_3/port_scanner/port_scanner.dart';
+import 'package:provider/provider.dart';
+
+// import '../lab.dart';
 
 class Dashboard extends StatelessWidget {
-  const Dashboard({super.key});
+  int i = 0;
+
+  Dashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: const Color(0xFF020817),
-
       appBar: AppBar(
         backgroundColor: Color(0xFF0A1730),
         foregroundColor: Colors.white,
         elevation: 0,
+        actionsIconTheme: IconThemeData(color: Colors.white),
         title: Row(
           children: [
-            Icon(
-              Icons.network_check,
-              size: 45,
-              color: Colors.blue,
-            ),
-            SizedBox(width: 8,),
+            Icon(Icons.network_check, size: 45, color: Colors.blue),
+            SizedBox(width: 8),
             const Text(
               "Network Monitor",
               style: TextStyle(
@@ -32,132 +36,75 @@ class Dashboard extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          Card(
+            margin: EdgeInsets.symmetric(horizontal: 20),
+            elevation: 10,
+            shadowColor: Colors.red,
+            child: FilledButton(
+              onPressed: () {
+                i++;
+                print(i);
+                context.read<DeviceProvider>()!.scan("192.168.11.0/24");
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(Colors.greenAccent),
+              ),
+              child: Text(
+                "update",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0A1730),
+                ),
+              ),
+            ),
+          ),
+        ],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
 
-      drawer: Drawer(
-        // backgroundColor: const Color(0xFF071126),
-        child: ListView(
-          children: [
-
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xFF0A1730),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.network_check,
-                    size: 45,
-                    color: Colors.blue,
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    "Network Monitor",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.dashboard,
-                color: Color(0xFF0A1730),
-              ),
-              title: const Text(
-                "Dashboard",
-                style: TextStyle(color: Color(0xFF0A1730)),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.devices,
-                color: Color(0xFF0A1730),
-              ),
-              title: const Text(
-                "Devices",
-                style: TextStyle(color:Color(0xFF0A1730)),
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.warning,
-                color: Color(0xFF0A1730),
-              ),
-              title: const Text(
-                "Alerts",
-                style: TextStyle(color: Color(0xFF0A1730)),
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.settings,
-                color: Color(0xFF0A1730),
-              ),
-              title: const Text(
-                "Settings",
-                style: TextStyle(color: Color(0xFF0A1730)),
-              ),
-            ),
-          ],
-        ),
-      ),
+      drawer: SharingDrawer(),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15),
 
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             // =========================
             // TOP STATISTICS
             // =========================
             LayoutBuilder(
               builder: (context, constraints) {
-
-                int columns = constraints.maxWidth > 800 ? 5 : 2;
-
+                int columns = 2;
+                if (constraints.maxWidth > 300 && constraints.maxWidth > 450 && constraints.maxWidth > 800){
+                  columns=4;
+                }
                 return GridView.count(
                   crossAxisCount: columns,
+
                   shrinkWrap: true,
-                  physics:
-                  const NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
 
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
 
-                  childAspectRatio: 2.3,
+                  childAspectRatio: 2.5,
 
                   children: [
-
-                    statCard(
-                      title: "TOTAL DEVICES",
-                      value: "43",
-                      icon: Icons.devices,
-                      iconColor: Colors.white,
-                    ),
-
                     statCard(
                       title: "ONLINE",
-                      value: "43",
+                      value:
+                          "${context.watch<DeviceProvider>().data?.online ?? 0}",
                       icon: Icons.check_circle_outline,
                       iconColor: Colors.green,
                     ),
 
                     statCard(
                       title: "OFFLINE",
-                      value: "0",
+                      value:
+                          "${context.watch<DeviceProvider>().data?.offline ?? 0}",
                       icon: Icons.error_outline,
                       iconColor: Colors.red,
                     ),
@@ -187,19 +134,14 @@ class Dashboard extends StatelessWidget {
             // =========================
             LayoutBuilder(
               builder: (context, constraints) {
-
                 bool desktop = constraints.maxWidth > 800;
 
                 if (desktop) {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       // SERVER INFO
-                      Expanded(
-                        flex: 3,
-                        child: serverInfo(),
-                      ),
+                      Expanded(flex: 3, child: serverInfo()),
 
                       const SizedBox(width: 15),
 
@@ -235,7 +177,6 @@ class Dashboard extends StatelessWidget {
                 // MOBILE
                 return Column(
                   children: [
-
                     serverInfo(),
 
                     const SizedBox(height: 15),
@@ -261,9 +202,7 @@ class Dashboard extends StatelessWidget {
                 );
               },
             ),
-            SizedBox(
-              height: 130,
-            ),
+            SizedBox(height: 130),
             Container(
               child: Wrap(
                 spacing: 25,
@@ -271,54 +210,54 @@ class Dashboard extends StatelessWidget {
                 // mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   FilledButton(
-                    onPressed: (){
-                      String? pageName =  ModalRoute.of(context)?.settings.name;
-                      print(pageName);
+                    onPressed: () {
+                      String? pageName = ModalRoute.of(context)?.settings.name;
+                      if (pageName == "Dashboard") print(pageName);
                     },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(
+                        Color(0xFF0A1730),
+                      ),
+                    ),
                     child: Text("Dashboard"),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          settings: RouteSettings(name: "ScanningDevices"),
+                          builder: (context) => ScanningDevices(),
+                        ),
+                      );
+                    },
                     style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
+                      backgroundColor: WidgetStatePropertyAll(
+                        Color(0xFF0A1730),
+                      ),
                     ),
+                    child: Text("Scanning Devices"),
                   ),
                   FilledButton(
-                      onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(
-                            settings: RouteSettings(name: "ScanningDevices"),
-                            builder: (context) => ScanningDevices())
-                        );
-                      },
-                      child: Text("Scanning Devices"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          settings: RouteSettings(name: 'PortScanner'),
+                          builder: (context) => PortScannerPage(),
+                        ),
+                      );
+                    },
+                    child: Text("Port Scanner"),
                     style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
-                    ),
-                  ),
-                  FilledButton(
-                      onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(
-                            settings: RouteSettings(name: 'ConnectSshServer'),
-                            builder: (context)=> ConnectSshServer())
-                        );
-                      },
-                      child: Text("SSH To Server"),
-                      style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),),
-                  ),
-                  FilledButton(
-                      onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(
-                          settings: RouteSettings(name: 'ScanningPortDevice'),
-                          builder: (context) => ScanningPortDevice(),)
-                        );
-                      },
-                      child: Text("Scaner Port Device"),
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(Color(0xFF0A1730)),
+                      backgroundColor: WidgetStatePropertyAll(
+                        Color(0xFF0A1730),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
           ],
         ),
       ),
@@ -336,36 +275,26 @@ class Dashboard extends StatelessWidget {
     required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(8),
 
       decoration: BoxDecoration(
         color: const Color(0xFF050D20),
 
         borderRadius: BorderRadius.circular(10),
 
-        border: Border.all(
-          color: const Color(0xFF142344),
-        ),
+        border: Border.all(color: const Color(0xFF142344)),
 
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 8,
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 10)],
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           Row(
-            mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
             children: [
-
               Text(
                 title,
                 style: const TextStyle(
@@ -376,11 +305,7 @@ class Dashboard extends StatelessWidget {
                 ),
               ),
 
-              Icon(
-                icon,
-                color: iconColor,
-                size: 18,
-              ),
+              Icon(icon, color: iconColor, size: 18),
             ],
           ),
 
@@ -397,10 +322,7 @@ class Dashboard extends StatelessWidget {
 
           const SizedBox(height: 5),
 
-          Container(
-            height: 1,
-            color: const Color(0xFF18243D),
-          ),
+          Container(height: 1, color: const Color(0xFF18243D)),
         ],
       ),
     );
@@ -419,24 +341,16 @@ class Dashboard extends StatelessWidget {
 
         borderRadius: BorderRadius.circular(10),
 
-        border: Border.all(
-          color: const Color(0xFF142344),
-        ),
+        border: Border.all(color: const Color(0xFF142344)),
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           Row(
             children: const [
-
-              Icon(
-                Icons.settings_ethernet,
-                size: 13,
-                color: Colors.blue,
-              ),
+              Icon(Icons.settings_ethernet, size: 13, color: Colors.blue),
 
               SizedBox(width: 7),
 
@@ -454,35 +368,17 @@ class Dashboard extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          infoRow(
-            "Hostname",
-            "dashboard",
-          ),
+          infoRow("Hostname", "dashboard"),
 
-          infoRow(
-            "OS",
-            "Debian GNU/Linux 13 (trixie)",
-          ),
+          infoRow("OS", "Debian GNU/Linux 13 (trixie)"),
 
-          infoRow(
-            "Kernel",
-            "6.12.48+deb13-cloud-amd64",
-          ),
+          infoRow("Kernel", "6.12.48+deb13-cloud-amd64"),
 
-          infoRow(
-            "Uptime",
-            "up 4 weeks, 1 day, 2 hours, 19 minutes",
-          ),
+          infoRow("Uptime", "up 4 weeks, 1 day, 2 hours, 19 minutes"),
 
-          infoRow(
-            "CPU Cores",
-            "4 cores",
-          ),
+          infoRow("CPU Cores", "4 cores"),
 
-          infoRow(
-            "IP Addresses",
-            "192.168.203.151 (enp2s0)",
-          ),
+          infoRow("IP Addresses", "192.168.203.151 (enp2s0)"),
         ],
       ),
     );
@@ -492,38 +388,24 @@ class Dashboard extends StatelessWidget {
   // INFO ROW
   // =====================================================
 
-  static Widget infoRow(
-      String title,
-      String value,
-      ) {
+  static Widget infoRow(String title, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 9,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 9),
 
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFF17233A),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFF17233A))),
       ),
 
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           SizedBox(
             width: 90,
 
             child: Text(
               title,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.grey, fontSize: 11),
             ),
           ),
 
@@ -532,10 +414,7 @@ class Dashboard extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
 
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 11),
             ),
           ),
         ],
@@ -564,24 +443,16 @@ class Dashboard extends StatelessWidget {
 
         borderRadius: BorderRadius.circular(10),
 
-        border: Border.all(
-          color: const Color(0xFF142344),
-        ),
+        border: Border.all(color: const Color(0xFF142344)),
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           Row(
             children: [
-
-              Icon(
-                icon,
-                size: 13,
-                color: color,
-              ),
+              Icon(icon, size: 13, color: color),
 
               const SizedBox(width: 7),
 
@@ -608,7 +479,6 @@ class Dashboard extends StatelessWidget {
                 alignment: Alignment.center,
 
                 children: [
-
                   SizedBox(
                     width: 120,
                     height: 120,
@@ -632,11 +502,9 @@ class Dashboard extends StatelessWidget {
                   ),
 
                   Column(
-                    mainAxisAlignment:
-                    MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
 
                     children: [
-
                       Text(
                         "$percent%",
                         style: const TextStyle(
@@ -648,10 +516,7 @@ class Dashboard extends StatelessWidget {
 
                       const Text(
                         "Used",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                     ],
                   ),
@@ -665,10 +530,7 @@ class Dashboard extends StatelessWidget {
           Center(
             child: Text(
               used,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.grey, fontSize: 11),
             ),
           ),
 
